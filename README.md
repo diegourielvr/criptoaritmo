@@ -16,6 +16,9 @@ gem install libui
 
 ```bash
 ruby Front/front.rb
+
+# Iniciar servidor
+?- servidor.
 ```
 
 *Cliente*
