@@ -1,161 +1,182 @@
 require 'libui'
 require 'socket'
 
+
+socket = TCPSocket.open('127.0.0.1',50000)
+
+
+
 UI = LibUI
 UI.init
 
-# =========================================================
-#  Funcion para comunicarse con el servidor Prolog
-# =========================================================
 
-def consultar_prolog(comando)
-  socket = TCPSocket.open('127.0.0.1', 50000)
-  socket.write("#{comando}.\n")
-  respuesta = socket.recv(1024).strip
-  socket.write("fin.\n")
-  socket.close
-  respuesta
-rescue Errno::ECONNREFUSED
-  "ERROR: No se pudo conectar al servidor Prolog"
-rescue => e
-  "ERROR: #{e.message}"
-end
+################################################
 
-def parsear_respuesta(respuesta)
-  vars = {}
-  respuesta.scan(/(\w)=(\d)/) { |k, v| vars[k] = v }
-  vars
-end
+# ventana pricipal
 
-# =========================================================
-#  Ventana principal
-# =========================================================
+################################################
 
 window = UI.new_window('Criptograma - Resolvedor', 520, 400, 1)
 UI.window_set_margined(window, 1)
 
-main_box = UI.new_vertical_box
-UI.box_set_padded(main_box, 1)
-UI.window_set_child(window, main_box)
+box = UI.new_vertical_box
+UI.box_set_padded(box, 1)
+UI.window_set_child(window, box)
 
-# =========================================================
-#  Grupo 1 — Problema
-# =========================================================
+
+################################################
+
+# GRUPO 1 - PROBLEMA
+
+################################################
 
 group_problema = UI.new_group('Problema Criptoaritmetico')
 UI.group_set_margined(group_problema, 1)
-UI.box_append(main_box, group_problema, 0)
+UI.box_append(box, group_problema, 0)
 
 prob_box = UI.new_vertical_box
 UI.box_set_padded(prob_box, 1)
 UI.group_set_child(group_problema, prob_box)
 
-UI.box_append(prob_box, UI.new_label('Encuentra los digitos que satisfacen la ecuacion:'), 0)
-UI.box_append(prob_box, UI.new_label(''), 0)
-UI.box_append(prob_box, UI.new_label('        D O S'), 0)
-UI.box_append(prob_box, UI.new_label('      + D O S'), 0)
-UI.box_append(prob_box, UI.new_label('      + D O S'), 0)
-UI.box_append(prob_box, UI.new_label('     -------'), 0)
-UI.box_append(prob_box, UI.new_label('    S I E T E'), 0)
-UI.box_append(prob_box, UI.new_label(''), 0)
-UI.box_append(prob_box, UI.new_label('Restricciones: cada letra = digito unico (0-9), D<>0, T<>0, S<>0'), 0)
+UI.box_append(prob_box, UI.new_label('Escribe tu criptoaritmo:'), 0)
 
-# =========================================================
-#  Grupo 2 — Accion
-# =========================================================
+#campo de texto
+input = UI.new_entry
+UI.box_append(prob_box,input, 0)
+UI.entry_set_text(input, '([[D,O,S],[D,O,S],[T,R,E,S]], [S,I,E,T,E]).')
 
-group_accion = UI.new_group('Resolver')
+
+UI.box_append(prob_box, UI.new_label('Restricciones: cada letra = digito unico (0-9), D≠0, T≠0, S≠0'), 0)
+
+################################################
+
+# GRUPO 2 - Accion
+
+################################################
+group_accion = UI.new_group('Acción')
 UI.group_set_margined(group_accion, 1)
-UI.box_append(main_box, group_accion, 0)
+UI.box_append(box, group_accion, 0)
 
 accion_box = UI.new_vertical_box
 UI.box_set_padded(accion_box, 1)
 UI.group_set_child(group_accion, accion_box)
 
-status_label = UI.new_label('Presiona el boton para consultar al servidor Prolog...')
-UI.box_append(accion_box, status_label, 0)
-UI.box_append(accion_box, UI.new_label(''), 0)
+#boton
+button =UI.new_button('Resolver')
+UI.box_append(accion_box, button, 0)
 
-btn = UI.new_button('Resolver con Prolog')
-UI.box_append(accion_box, btn, 0)
+#etiqueta de resultado
+result_label = UI.new_label('')
+UI.box_append(accion_box, result_label, 0)
 
-# =========================================================
-#  Grupo 3 — Tabla de resultados
-# =========================================================
+UI.window_on_closing(window) do
+    UI.quit
+    0
+end
 
-group_result = UI.new_group('Asignacion de Valores')
-UI.group_set_margined(group_result, 1)
-UI.box_append(main_box, group_result, 1)
+################################################
+
+# GRUPO 3 - Tabla de resultados
+
+################################################
+group_resultado = UI.new_group('Resultado')
+UI.group_set_margined(group_resultado, 1)
+UI.box_append(box, group_resultado, 0)
 
 result_box = UI.new_vertical_box
 UI.box_set_padded(result_box, 1)
-UI.group_set_child(group_result, result_box)
+UI.group_set_child(group_resultado, result_box)
 
-letras_row = UI.new_horizontal_box
-UI.box_set_padded(letras_row, 1)
-UI.box_append(result_box, letras_row, 0)
+result_label = UI.new_label('Esperando resultado...')
+UI.box_append(result_box, result_label, 0)
 
-letras = %w[D O S T R E I]
-letras.each do |l|
-  UI.box_append(letras_row, UI.new_label("  #{l}  "), 1)
-end
+label_letras = UI.new_label("")
+UI.box_append(result_box, label_letras, 0)
 
-UI.box_append(result_box, UI.new_horizontal_separator, 0)
+separator = UI.new_horizontal_separator
+UI.box_append(result_box, separator, 0)
 
-valor_row = UI.new_horizontal_box
-UI.box_set_padded(valor_row, 1)
-UI.box_append(result_box, valor_row, 0)
+label_valores = UI.new_label("")
+UI.box_append(result_box, label_valores, 0)
 
-valor_labels = {}
-letras.each do |l|
-  lbl = UI.new_label('  ?  ')
-  UI.box_append(valor_row, lbl, 1)
-  valor_labels[l] = lbl
-end
+label_operacion = UI.new_label("")
+UI.box_append(result_box, label_operacion, 0)
 
-UI.box_append(result_box, UI.new_label(''), 0)
+#evento del boton
+UI.button_on_clicked(button) do
+    texto = UI.entry_text(input).to_s
+    
+    socket.puts(texto)
+    socket.flush
 
-ecuacion_label = UI.new_label('Resultado: ---')
-UI.box_append(result_box, ecuacion_label, 0)
+    resultado = socket.gets
+    
+    #puts "RESULTADO: #{resultado}"
+    
+    resultado = resultado.strip
 
-# =========================================================
-#  Evento del boton
-# =========================================================
+    vars = {}
+    resultado.scan(/([A-Z])=(\d)/) do |letra, valor|
+      vars[letra] = valor
+    end
 
-UI.button_on_clicked(btn) do
-  UI.label_set_text(status_label, 'Consultando servidor Prolog...')
-  UI.label_set_text(ecuacion_label, 'Calculando...')
-  letras.each { |l| UI.label_set_text(valor_labels[l], '  ?  ') }
+    if vars.empty?
+      UI.label_set_text(result_label, "Error o sin resultado")
+    else
+      letras = vars.keys.sort
 
-  respuesta = consultar_prolog('resolver')
-  vars = parsear_respuesta(respuesta)
+      fila_letras = letras.join('  ')
+      fila_valores = letras.map { |l| vars[l] }.join('  ')
+      linea = '-' * fila_letras.length
 
-  if respuesta.start_with?('ERROR') || vars.empty?
-    UI.label_set_text(status_label, "Error: #{respuesta}")
-    UI.label_set_text(ecuacion_label, 'Sin solucion')
-  else
-    d, o, s = vars['D'], vars['O'], vars['S']
-    t, r, e, i = vars['T'], vars['R'], vars['E'], vars['I']
-    dos   = "#{d}#{o}#{s}".to_i
-    siete = "#{s}#{i}#{e}#{t}#{e}".to_i
+      UI.label_set_text(label_letras, fila_letras)
+      UI.label_set_text(label_valores, fila_valores)
 
-    vals = { 'D' => d, 'O' => o, 'S' => s, 'T' => t, 'R' => r, 'E' => e, 'I' => i }
-    vals.each { |letra, val| UI.label_set_text(valor_labels[letra], "  #{val}  ") }
+      # Convertir texto de entrada a estructura Ruby texto resultado
+      begin
+        # Extraer listas de letras manualmente lista
+        partes = texto.scan(/\[([A-Za-z,\s]+)\]/)
 
-    UI.label_set_text(ecuacion_label, "OK  #{dos} + #{dos} + #{dos} = #{siete}")
-    UI.label_set_text(status_label, 'Solucion encontrada exitosamente')
+        # Convertir cada grupo a array
+        listas = partes.map { |p| p[0].gsub(' ', '').split(',') }
+
+
+        # Último es resultado
+        resultado_letras = listas.pop
+        sumandos = listas
+
+        # Convertir letras a número
+        convertir = lambda do |lista|
+          lista.map { |l| vars[l] }.join.to_i
+        end
+
+        # Convertir cada parte
+        numeros = sumandos.map { |s| convertir.call(s) }
+        resultado_num = convertir.call(resultado_letras)
+
+        texto_operacion = "#{numeros.join(' + ')} = #{resultado_num}"
+
+        operacion_label = UI.new_label("")
+
+        # Mostrar resultado final
+        UI.label_set_text(label_operacion, texto_operacion)
+
+      rescue => e
+        puts "ERROR: #{e}"
+  puts e.backtrace
+        UI.label_set_text(result_label, "Error al procesar operación")
+    end
   end
 end
 
-# =========================================================
-#  Cerrar
-# =========================================================
 
-UI.window_on_closing(window) do
-  UI.quit
-  0
-end
+# Asignar contenido a la ventana
+UI.window_set_child(window, box)
 
+# Mostrar ventana
 UI.control_show(window)
+
+
 UI.main
 UI.quit
+socket.close
